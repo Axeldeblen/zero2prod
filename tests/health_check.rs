@@ -22,3 +22,50 @@ fn spawn_app() -> String {
     let _ = tokio::spawn(server);
     format!("http://127.0.0.1:{}", port)
 }
+
+#[tokio::test]
+async fn subscribe_fn_returns_200_for_valid_inputs() {
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    let response = client
+        .post(&format!("{}/subscriptions", &app_address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("failed to execute");
+
+    assert_eq!(200, response.status().as_u16());
+}
+
+#[tokio::test]
+async fn subscribe_fn_returns_400_for_invalid_inputs() {
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+
+    let test_cases = vec![
+        ("name=le%20guin", "Missing email"),
+        ("email=ursula_le_guin%40gmail.com", "Missing name"),
+        ("", "Missing both"),
+    ];
+
+    for (body, error_msg) in test_cases {
+        let response = client
+            .post(&format!("{}/subscriptions", &app_address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("failed to execute");
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "API response rejected because data {}",
+            error_msg
+        );
+    }
+}
