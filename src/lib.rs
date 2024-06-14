@@ -1,12 +1,11 @@
-use actix_web::dev::Server;
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer};
-use std::net::TcpListener;
+pub mod configuration;
+pub mod routes;
+pub mod startup;
 
-#[derive(serde::Deserialize)]
-struct FormData {
-    name: String,
-    email: String,
-}
+use actix_web::dev::Server;
+use actix_web::{web, App, HttpServer};
+use routes::{health_check, subscribe};
+use std::net::TcpListener;
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(|| {
@@ -17,11 +16,4 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     .listen(listener)?
     .run();
     Ok(server)
-}
-
-async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().finish()
-}
-async fn subscribe(_form: web::Form<FormData>) -> HttpResponse {
-    HttpResponse::Ok().finish()
 }
