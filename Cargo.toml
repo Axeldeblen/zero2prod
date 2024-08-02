@@ -25,6 +25,7 @@ sqlx = { version = "0.7", default-features = false, features = [
 ] }
 config = "0.14.0"
 log = "0.4"
+tracing-bunyan-formatter = "0.3"
 tracing =  { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
 uuid = { version = "1", features = ["v4"] }
