@@ -14,7 +14,6 @@ name = "zero2prod"
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
-env_logger = "0.9"
 sqlx = { version = "0.7", default-features = false, features = [
     "runtime-tokio-rustls",
     "macros",
@@ -24,8 +23,8 @@ sqlx = { version = "0.7", default-features = false, features = [
     "migrate",
 ] }
 config = "0.14.0"
-log = "0.4"
 tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1"
 tracing =  { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
 uuid = { version = "1", features = ["v4"] }
