@@ -3,6 +3,7 @@ WORKDIR /app
 RUN apt update && apt install lld clang -y 
 
 FROM chef as planner
+COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef as builder

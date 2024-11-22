@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use secrecy::Secret;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
 
@@ -50,8 +50,8 @@ async fn spawn_app() -> TestApp {
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
     let mut configuration = get_configuration().expect("Failed to read configuration.");
-    configuration.database_settings.database_name = Uuid::new_v4().to_string();
-    let connection_pool = configure_database(&configuration.database_settings).await;
+    configuration.database.database_name = Uuid::new_v4().to_string();
+    let connection_pool = configure_database(&configuration.database).await;
     let server = run(listener, connection_pool.clone()).expect("Failed to bind to address");
     let _ = tokio::spawn(server);
     TestApp {
@@ -61,17 +61,22 @@ async fn spawn_app() -> TestApp {
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    let connection = PgPoolOptions::new()
-        .connect(&config.connection_string_without_db_name().expose_secret())
+    let maintenance_settings = DatabaseSettings {
+        database_name: "postgres".to_string(),
+        username: "postgres".to_string(),
+        password: Secret::new("password".to_string()),
+        ..config.clone()
+    };
+    let mut connection = PgConnection::connect_with(&maintenance_settings.connect_options())
         .await
-        .expect("");
+        .expect("Failed to connect to postgres");
 
-    sqlx::query(&format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
-        .execute(&connection)
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
         .expect("Failed to create database.");
 
-    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
+    let connection_pool = PgPool::connect_with(config.connect_options())
         .await
         .expect("Failed to connect to Postgres.");
 
